@@ -30,7 +30,7 @@ jobs:
         restore-keys: setup.py
 
     - name: pylint
-      run: pylint nari
+      run: pylint nari/ext/act
 
   tests:
     name: Tests
@@ -90,5 +90,6 @@ jobs:
           /opt/hostedtoolcache/Python/3.10.2/x64/lib/python3.10/site-packages
         key: ${{ hashFiles('setup.py') }}
         restore-keys: setup.py
+
     - name: mypy
       run: mypy --namespace-packages --explicit-package-bases nari
