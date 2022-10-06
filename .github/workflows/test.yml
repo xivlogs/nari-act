@@ -91,4 +91,4 @@ jobs:
         key: ${{ hashFiles('setup.py') }}
         restore-keys: setup.py
     - name: mypy
-      run: mypy nari
+      run: mypy --namespace-packages --explicit-package-bases nari
