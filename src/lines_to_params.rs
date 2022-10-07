@@ -1,6 +1,5 @@
 use crate::actor;
 use crate::parser;
-use crate::utils;
 use pyo3::prelude::*;
 
 type AbilityParams<'a> = (
@@ -39,25 +38,25 @@ pub(crate) fn ability_from_params(inp: Vec<&str>) -> AbilityParams {
     let source_position = col.drain(..4).collect::<Vec<&str>>();
     let target_resources = col.drain(..6).collect::<Vec<&str>>();
     let target_position = col.drain(..4).collect::<Vec<&str>>();
-    let sequence = parser::param_to_4_byte_int(col.first().unwrap());
+    let sequence = parser::u32_from_param(col.first().unwrap());
     (
         actor::parse_actor(source_actor),
         source_resources
             .iter()
-            .map(|x| utils::parse_int(x))
+            .map(|x| parser::u32_from_param(x))
             .collect(),
         source_position
             .iter()
-            .map(|x| utils::parse_float(x))
+            .map(|x| parser::f32_from_param(x))
             .collect(),
         actor::parse_actor(target_actor),
         target_resources
             .iter()
-            .map(|x| utils::parse_int(x))
+            .map(|x| parser::u32_from_param(x))
             .collect(),
         target_position
             .iter()
-            .map(|x| utils::parse_float(x))
+            .map(|x| parser::f32_from_param(x))
             .collect(),
         ability,
         action_effects
@@ -72,7 +71,7 @@ pub(crate) fn ability_from_params(inp: Vec<&str>) -> AbilityParams {
 #[pyfunction]
 #[pyo3(text_signature = "(params: list[str]) -> list[int]")]
 pub(crate) fn action_effect_from_params(inp: Vec<&str>) -> ActionEffectParams {
-    let num = parser::params_to_8_byte_int(inp);
+    let num = parser::u64_from_param(inp);
     let param0 = (num >> 56) as u8;
     let param1 = (num >> 48) as u8;
     let param2 = (num >> 40) as u8;
@@ -87,12 +86,12 @@ pub(crate) fn action_effect_from_params(inp: Vec<&str>) -> ActionEffectParams {
 #[pyfunction]
 #[pyo3(text_signature = "(params: list[str]) -> (int, int, float, int")]
 pub(crate) fn status_effect_from_params(inp: Vec<&str>) -> StatusEffectParams {
-    let (param0, param1) = parser::param_to_2x2_byte_int(inp.get(0).unwrap());
+    let (param0, param1) = parser::u16x2_from_param(inp.get(0).unwrap());
     (
         param0,
         param1,
-        parser::param_to_4_byte_float(inp.get(1).unwrap()),
-        parser::param_to_4_byte_int(inp.get(2).unwrap()),
+        parser::f32_from_param(inp.get(1).unwrap()),
+        parser::u32_from_param(inp.get(2).unwrap()),
     )
 }
 
@@ -109,8 +108,8 @@ pub(crate) fn statuslist_from_params(inp: Vec<&str>) -> StatuslistParams {
     (
         actor::parse_actor(actor),
         class.first().unwrap(),
-        resources.iter().map(|x| utils::parse_int(x)).collect(),
-        position.iter().map(|x| utils::parse_float(x)).collect(),
+        resources.iter().map(|x| parser::u32_from_param(x)).collect(),
+        position.iter().map(|x| parser::f32_from_param(x)).collect(),
         status_effects
             .chunks(3)
             .map(|x| status_effect_from_params(x.to_vec()))

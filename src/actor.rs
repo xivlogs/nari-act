@@ -6,7 +6,7 @@ use pyo3::prelude::*;
 #[pyo3(text_signature = "(name_id_pair: list[str]) -> (int, str)")]
 pub(crate) fn parse_actor(inp: Vec<&str>) -> (u32, &str) {
     (
-        parser::param_to_4_byte_int(inp.first().unwrap()),
+        parser::u32_from_param(inp.first().unwrap()),
         inp.last().unwrap(),
     )
 }

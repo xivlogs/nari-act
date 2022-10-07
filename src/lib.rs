@@ -9,7 +9,7 @@ use pyo3::wrap_pymodule;
 
 /// Parser sub module in nari-act-rust
 #[pymodule]
-fn parser(py: Python, m: &PyModule) -> PyResult<()>{
+fn parser_mod(py: Python, m: &PyModule) -> PyResult<()>{
     m.add_function(wrap_pyfunction!(parser::f32_from_param, m)?)?;
     m.add_function(wrap_pyfunction!(parser::join_params_pad, m)?)?;
     m.add_function(wrap_pyfunction!(parser::u8x4_from_param, m)?)?;
@@ -23,8 +23,8 @@ fn parser(py: Python, m: &PyModule) -> PyResult<()>{
 
 /// Utils sub module in nari-act-rust
 #[pymodule]
-fn utils(py: Python, m: &PyModule) -> PyResult<()>{
-    m.add_function(wrap_pyfunction!(utils::date_from_cs_string(), m)?)?;
+fn utils_mod(py: Python, m: &PyModule) -> PyResult<()>{
+    m.add_function(wrap_pyfunction!(utils::date_from_cs_string, m)?)?;
     m.add_function(wrap_pyfunction!(utils::pad4, m)?)?;
     m.add_function(wrap_pyfunction!(utils::pad8, m)?)?;
     m.add_function(wrap_pyfunction!(utils::validate_checksum, m)?)?;
@@ -42,8 +42,8 @@ fn nari_act_rust(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(lines_to_params::status_effect_from_params, m)?)?;
     m.add_function(wrap_pyfunction!(lines_to_params::statuslist_from_params, m)?)?;
 
-    m.add_wrapped(wrap_pymodule!(parser))?;
-    m.add_wrapped(wrap_pymodule!(utils))?;
+    m.add_wrapped(wrap_pymodule!(parser_mod))?;
+    m.add_wrapped(wrap_pymodule!(utils_mod))?;
 
     // HACK: abuse python imports to make `from rustext.utils import validate_checksum` work
     // https://github.com/PyO3/pyo3/issues/759#issuecomment-977835119 For PyO3 v0.16.x <=

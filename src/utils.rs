@@ -2,7 +2,6 @@ use md5::{Digest, Md5};
 use pyo3::prelude::*;
 use sha2::Sha256;
 use std::num::ParseIntError;
-use std::fmt;
 
 #[pyfunction]
 #[pyo3(text_signature = "(time_str: str) -> int")]
