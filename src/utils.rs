@@ -6,7 +6,7 @@ use std::fmt;
 
 #[pyfunction]
 #[pyo3(text_signature = "(time_str: str) -> int")]
-pub(crate) fn date_from_act_timestamp(time_str: &str) -> i64 {
+pub(crate) fn date_from_cs_string(time_str: &str) -> i64 {
     let str_len = time_str.len();
     let date_time_str = &mut time_str[..&str_len - 7].to_owned();
     date_time_str.push_str(&time_str[&str_len - 6..]);
@@ -34,14 +34,6 @@ pub(crate) fn pad4(str: &str) -> String {
 #[pyo3(text_signature = "(src_str: str) -> str")]
 pub(crate) fn pad8(str: &str) -> String {
     format!("{:0>8}", str)
-}
-
-pub(crate) fn parse_float(inp: &str) -> f32 {
-    f32::from_bits(parse_int(inp))
-}
-
-pub(crate) fn parse_int(inp: &str) -> u32 {
-    inp.parse::<u32>().unwrap_or(0)
 }
 
 /// Gets [to_hash, check] from a line based on algo

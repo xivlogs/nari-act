@@ -4,55 +4,54 @@ mod parser;
 mod utils;
 
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
+use pyo3::wrap_pymodule;
 
-/// Formats the sum of two numbers as string.
-#[pyfunction]
-fn sum_as_string(a: usize, b: usize) -> PyResult<String> {
-    Ok((a + b).to_string())
+/// Parser sub module in nari-act-rust
+#[pymodule]
+fn parser(py: Python, m: &PyModule) -> PyResult<()>{
+    m.add_function(wrap_pyfunction!(parser::f32_from_param, m)?)?;
+    m.add_function(wrap_pyfunction!(parser::join_params_pad, m)?)?;
+    m.add_function(wrap_pyfunction!(parser::u8x4_from_param, m)?)?;
+    m.add_function(wrap_pyfunction!(parser::u16_from_param, m)?)?;
+    m.add_function(wrap_pyfunction!(parser::u16x2_from_param, m)?)?;
+    m.add_function(wrap_pyfunction!(parser::u32_from_param, m)?)?;
+    m.add_function(wrap_pyfunction!(parser::u64_from_param, m)?)?;
+
+    Ok(())
 }
 
-/// A Python module implemented in Rust.
+/// Utils sub module in nari-act-rust
+#[pymodule]
+fn utils(py: Python, m: &PyModule) -> PyResult<()>{
+    m.add_function(wrap_pyfunction!(utils::date_from_cs_string(), m)?)?;
+    m.add_function(wrap_pyfunction!(utils::pad4, m)?)?;
+    m.add_function(wrap_pyfunction!(utils::pad8, m)?)?;
+    m.add_function(wrap_pyfunction!(utils::validate_checksum, m)?)?;
+
+    Ok(())
+}
+
+
+/// Main module for rust extensions with nari-act
 #[pymodule]
 fn nari_act_rust(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(actor::parse_actor, m)?)?;
     m.add_function(wrap_pyfunction!(lines_to_params::ability_from_params, m)?)?;
-    m.add_function(wrap_pyfunction!(
-        lines_to_params::action_effect_from_params,
-        m
-    )?)?;
-    m.add_function(wrap_pyfunction!(
-        lines_to_params::status_effect_from_params,
-        m
-    )?)?;
-    m.add_function(wrap_pyfunction!(
-        lines_to_params::statuslist_from_params,
-        m
-    )?)?;
+    m.add_function(wrap_pyfunction!(lines_to_params::action_effect_from_params, m)?)?;
+    m.add_function(wrap_pyfunction!(lines_to_params::status_effect_from_params, m)?)?;
+    m.add_function(wrap_pyfunction!(lines_to_params::statuslist_from_params, m)?)?;
 
-    let parser_module = PyModule::new(py, "parser")?;
-    parser_module.add_function(wrap_pyfunction!(parser::param_to_2_byte_int, m)?)?;
-    parser_module.add_function(wrap_pyfunction!(parser::param_to_2x2_byte_int, m)?)?;
-    parser_module.add_function(wrap_pyfunction!(parser::param_to_4_byte_float, m)?)?;
-    parser_module.add_function(wrap_pyfunction!(parser::param_to_4_byte_int, m)?)?;
-    parser_module.add_function(wrap_pyfunction!(parser::param_to_4x1_byte_int, m)?)?;
-    parser_module.add_function(wrap_pyfunction!(parser::params_to_8_byte_int, m)?)?;
-    parser_module.add_function(wrap_pyfunction!(parser::params_to_param, m)?)?;
-    m.add_submodule(parser_module)?;
-
-    let utils_module = PyModule::new(py, "utils")?;
-    utils_module.add_function(wrap_pyfunction!(utils::date_from_act_timestamp, m)?)?;
-    utils_module.add_function(wrap_pyfunction!(utils::pad4, m)?)?;
-    utils_module.add_function(wrap_pyfunction!(utils::pad8, m)?)?;
-    utils_module.add_function(wrap_pyfunction!(utils::validate_checksum, m)?)?;
-    m.add_submodule(utils_module)?;
+    m.add_wrapped(wrap_pymodule!(parser))?;
+    m.add_wrapped(wrap_pymodule!(utils))?;
 
     // HACK: abuse python imports to make `from rustext.utils import validate_checksum` work
-    // https://github.com/PyO3/pyo3/issues/759#issuecomment-977835119
+    // https://github.com/PyO3/pyo3/issues/759#issuecomment-977835119 For PyO3 v0.16.x <=
+    // https://github.com/PyO3/pyo3/issues/2644#issuecomment-1259721976 For PyO3 v0.17.x >=
     let sys: &PyModule = py.import("sys").unwrap();
-    sys.getattr("modules")?
-        .set_item("act_rust.parser", parser_module)?;
-    sys.getattr("modules")?
-        .set_item("act_rust.utils", utils_module)?;
+    let sys_modules: &PyDict = sys.getattr("modules")?.downcast()?;
+    sys_modules.set_item("nari_act_rust.parser", m.getattr("parser")?)?;
+    sys_modules.set_item("nari_act_rust.utils", m.getattr("utils")?)?;
 
     Ok(())
 }
