@@ -1,18 +1,6 @@
-use crate::actor;
 use crate::parser;
 use pyo3::prelude::*;
-
-type AbilityParams<'a> = (
-    (u32, &'a str),
-    Vec<u32>,
-    Vec<f32>,
-    (u32, &'a str),
-    Vec<u32>,
-    Vec<f32>,
-    Vec<&'a str>,
-    Vec<(u8, u8, u8, u8, u16, u8, u8)>,
-    u32,
-);
+use pyo3::types::PyDict;
 
 type ActionEffectParams = (u8, u8, u8, u8, u16, u8, u8);
 type StatusEffectParams = (u16, u16, f32, u32);
@@ -25,46 +13,84 @@ type StatuslistParams<'a> = (
     Vec<(u16, u16, f32, u32)>,
 );
 
+/// Get id name type from tuple
+#[pyfunction]
+#[pyo3(text_signature = "(name_id_pair: list[str]) -> (int, str)")]
+pub(crate) fn parse_id_name_pair(inp: Vec<&str>) -> (u32, &str) {
+    (
+        parser::u32_from_param(inp.first().unwrap()),
+        inp.last().unwrap(),
+    )
+}
+
 /// Params to ability
 #[pyfunction]
-#[pyo3(text_signature = "(params: list[str]) -> list[any]")]
-pub(crate) fn ability_from_params(inp: Vec<&str>) -> AbilityParams {
+#[pyo3(text_signature = "(timestamp: int, params: list[str]) -> Ability")]
+pub(crate) fn ability_from_params(timestamp: i64, inp: Vec<&str>) -> &PyAny {
     let mut col = inp;
     let source_actor = col.drain(..2).collect::<Vec<&str>>();
     let ability = col.drain(..2).collect::<Vec<&str>>();
     let target_actor = col.drain(..2).collect::<Vec<&str>>();
     let action_effects = col.drain(..16).collect::<Vec<&str>>();
-    let source_resources = col.drain(..6).collect::<Vec<&str>>();
+    let source_resources: (u32, u32, u32, u32, u32, u32) = col.drain(..6)
+        .map(|x| parser::u32_from_param(x))
+        .collect_tuple().unwrap();
     let source_position = col.drain(..4).collect::<Vec<&str>>();
-    let target_resources = col.drain(..6).collect::<Vec<&str>>();
+    let target_resources: (u32, u32, u32, u32, u32, u32) = col.drain(..6)
+        .map(|x| parser::u32_from_param(x))
+        .collect_tuple().unwrap();
     let target_position = col.drain(..4).collect::<Vec<&str>>();
     let sequence = parser::u32_from_param(col.first().unwrap());
-    (
-        actor::parse_actor(source_actor),
-        source_resources
+    Python::with_gil(|py| {
+        let actor = PyModule::import(py, "nari.types.actor").unwrap()
+            .getattr("Actor").unwrap();
+
+        let source_actor = actor.call1(parse_id_name_pair(source_actor)).unwrap();
+        let target_actor = actor.call1(parse_id_name_pair(target_actor)).unwrap();
+        let source_resources_param = source_resources;
+        let target_resources_param = target_resources;
+        source_actor.getattr("resources").unwrap().call1(source_resources_param).unwrap();
+        target_actor.getattr("resources").unwrap().call1(target_resources_param).unwrap();
+        source_actor.getattr("position").unwrap().call1(source_position
             .iter()
             .map(|x| parser::u32_from_param(x))
-            .collect(),
-        source_position
-            .iter()
-            .map(|x| parser::f32_from_param(x))
-            .collect(),
-        actor::parse_actor(target_actor),
-        target_resources
+            .collect()).unwrap();
+        target_actor.getattr("position").unwrap().call1(target_position
             .iter()
             .map(|x| parser::u32_from_param(x))
-            .collect(),
-        target_position
-            .iter()
-            .map(|x| parser::f32_from_param(x))
-            .collect(),
-        ability,
-        action_effects
+            .collect()).unwrap();
+
+        let ability_event = PyModule::import(py, "nari.types.ability").unwrap()
+            .getattr("Ability").unwrap().call1(parse_id_name_pair(ability)).unwrap();
+
+        let action_effect = PyModule::import(py, "nari.types.actioneffect").unwrap()
+            .getattr("ActionEffect").unwrap();
+
+        let action_effects = action_effects
             .chunks(2)
-            .map(|x| action_effect_from_params(x.to_vec()))
-            .collect::<Vec<(u8, u8, u8, u8, u16, u8, u8)>>(),
-        sequence,
-    )
+            .map(|x| {
+                let (param0, param1, severity, effect_category, value, flags, multiplier) = action_effect_from_params(x.to_vec());
+                let kwargs = PyDict::new(py);
+                kwargs.set_item("effect_category", effect_category).unwrap();
+                kwargs.set_item("severity", severity).unwrap();
+                kwargs.set_item("flags", flags).unwrap();
+                kwargs.set_item("value", value).unwrap();
+                kwargs.set_item("multiplier", multiplier).unwrap();
+                kwargs.set_item("additional_params", (param0, param1)).unwrap();
+                action_effect.call((), Some(kwargs)).unwrap()
+            }).collect::<Vec<&PyAny>>();
+
+        let kwargs = PyDict::new(py);
+        kwargs.set_item("timestamp", timestamp).unwrap();
+        kwargs.set_item("action_effects", action_effects).unwrap();
+        kwargs.set_item("source_actor", source_actor).unwrap();
+        kwargs.set_item("target_actor", target_actor).unwrap();
+        kwargs.set_item("ability", ability_event).unwrap();
+        kwargs.set_item("sequence_id", sequence).unwrap();
+
+        PyModule::import(py, "nari.types.event.ability").unwrap()
+            .getattr("Ability").unwrap().call((), Some(kwargs)).unwrap()
+    })
 }
 
 /// Params to action_effect
@@ -74,13 +100,13 @@ pub(crate) fn action_effect_from_params(inp: Vec<&str>) -> ActionEffectParams {
     let mut num = parser::u32_from_param(inp[0]);
     let param0 = (&num >> 24) as u8;
     let param1 = (&num >> 16) as u8;
-    let param2 = (&num >> 8) as u8;
-    let param3 = num as u8;
+    let severity = (&num >> 8) as u8;
+    let effect_category = num as u8;
     num = parser::u32_from_param(inp[1]);
-    let param4 = (&num >> 16) as u16;
-    let param5 = (&num >> 8) as u8;
-    let param6 = num as u8;
-    (param0, param1, param2, param3, param4, param5, param6)
+    let value = (&num >> 16) as u16;
+    let flags = (&num >> 8) as u8;
+    let multiplier = num as u8;
+    (param0, param1, severity, effect_category, value, flags, multiplier)
 }
 
 /// Params to status_effect
@@ -107,7 +133,7 @@ pub(crate) fn statuslist_from_params(inp: Vec<&str>) -> StatuslistParams {
     let position = col.drain(..4).collect::<Vec<&str>>();
     let status_effects = col.drain(..col.len() - 1).collect::<Vec<&str>>();
     (
-        actor::parse_actor(actor),
+        parse_id_name_pair(actor),
         class.first().unwrap(),
         resources.iter().map(|x| parser::u32_from_param(x)).collect(),
         position.iter().map(|x| parser::f32_from_param(x)).collect(),

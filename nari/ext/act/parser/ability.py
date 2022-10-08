@@ -1,5 +1,6 @@
 """Parse ability (action) data from ACT log line"""
 from struct import unpack
+from typing import Tuple, List
 
 from nari.types import Timestamp
 from nari.types.actioneffect import ActionEffect
@@ -9,6 +10,50 @@ from nari.types.ability import Ability as AbilityEvent
 from nari.types.event import Event
 from nari.ext.act.exceptions import ActLineParsingException
 
+try:
+    from nari_act_rust import ability_from_params
+except ImportError:
+    def ability_from_params(timestamp: Timestamp, params: list[str]) -> Ability:
+        source_actor = Actor(*params[0:2])
+        ability = AbilityEvent(*params[2:4])
+        target_actor = Actor(*params[4:6])
+        action_effects = []
+        for i in range(0, 16, 2):
+            index = i + 6
+            action_effects.append(
+                action_effect_from_logline(params[index:index + 2])
+            )
+        # apparently when the target actor is 'none', then the *source* actor's resources will be empty will also be empty
+        # also apparently, other time(s) it will be blank just because /shrug
+        try:
+            source_actor.resources.update(
+                *[int(x) for x in params[22:28]]
+            )
+            source_actor.position.update(
+                *[float(x) for x in params[28:32]]
+            )
+        except ValueError:
+            pass
+
+        try:
+            target_actor.resources.update(
+                *[int(x) for x in params[32:38]]
+            )
+            target_actor.position.update(
+                *[float(x) for x in params[38:42]]
+            )
+        except ValueError:
+            pass
+        sequence_id = int(params[42], 16)
+
+        return Ability(
+            timestamp=timestamp,
+            action_effects=action_effects,
+            source_actor=source_actor,
+            target_actor=target_actor,
+            ability=ability,
+            sequence_id=sequence_id,
+        )
 
 def action_effect_from_logline(params: list[str]) -> ActionEffect:
     """Takes the eight bytes from an ACT log line and returns ActionEffect data"""
@@ -20,7 +65,7 @@ def action_effect_from_logline(params: list[str]) -> ActionEffect:
     param0, param1, severity, effect_category, value, flags, multiplier = parsed_params
     return ActionEffect(effect_category=effect_category, severity=severity, flags=flags, value=value, multiplier=multiplier, additional_params=[param0, param1])
 
-def ability_from_logline(timestamp: Timestamp, params: list[str]) -> Event:
+def ability_from_logline(timestamp: Timestamp, params: list[str]) -> Ability:
     """Returns an ability event from an ACT log line
 
     ACT Event ID (decimal): 21
@@ -61,46 +106,7 @@ def ability_from_logline(timestamp: Timestamp, params: list[str]) -> Event:
     |42   |int|Sequence ID|
 
     """
-    source_actor = Actor(*params[0:2])
-    ability = AbilityEvent(*params[2:4])
-    target_actor = Actor(*params[4:6])
-    action_effects = []
-    for i in range(0, 16, 2):
-        index = i + 6
-        action_effects.append(
-            action_effect_from_logline(params[index:index+2])
-        )
-    # apparently when the target actor is 'none', then the *source* actor's resources will be empty will also be empty
-    # also apparently, other time(s) it will be blank just because /shrug
-    try:
-        source_actor.resources.update(
-            *[int(x) for x in params[22:28]]
-        )
-        source_actor.position.update(
-            *[float(x) for x in params[28:32]]
-        )
-    except ValueError:
-        pass
-
-    try:
-        target_actor.resources.update(
-            *[int(x) for x in params[32:38]]
-        )
-        target_actor.position.update(
-            *[float(x) for x in params[38:42]]
-        )
-    except ValueError:
-        pass
-    sequence_id = int(params[42], 16)
-
-    return Ability(
-        timestamp=timestamp,
-        action_effects=action_effects,
-        source_actor=source_actor,
-        target_actor=target_actor,
-        ability=ability,
-        sequence_id=sequence_id,
-    )
+    return ability_from_params(timestamp, params)
 
 def aoeability_from_logline(timestamp: Timestamp, params: list[str]) -> Event:
     """Parses an AoE ability from log line"""

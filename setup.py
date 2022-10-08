@@ -17,7 +17,10 @@ version = '0.1.0'
 try:
     from setuptools_rust import Binding, RustExtension
 
-    extra_opts = {'rust_extensions': [RustExtension("nari_act_rust", debug=False, quiet=True, binding=Binding.PyO3)]}
+    extra_opts = {
+        'rust_extensions': [RustExtension("nari_act_rust", debug=False, quiet=True, binding=Binding.PyO3)],
+        'zip_safe': False
+    }
 except ImportError:
     extra_opts = {}
 

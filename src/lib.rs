@@ -1,4 +1,3 @@
-mod actor;
 mod lines_to_params;
 mod parser;
 mod utils;
@@ -10,7 +9,6 @@ use pyo3::types::PyDict;
 /// Main module for rust extensions with nari-act
 #[pymodule]
 fn nari_act_rust(py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(actor::parse_actor, m)?)?;
     m.add_function(wrap_pyfunction!(lines_to_params::ability_from_params, m)?)?;
     m.add_function(wrap_pyfunction!(lines_to_params::action_effect_from_params, m)?)?;
     m.add_function(wrap_pyfunction!(lines_to_params::status_effect_from_params, m)?)?;
