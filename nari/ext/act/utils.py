@@ -26,8 +26,7 @@ except ImportError:
         """Look, this is dirty. This is wrong. Please someone find a better way to do this."""
         return int(datetime.strptime(f'{datestr[:26]}{datestr[-6:]}', DEFAULT_DATE_FORMAT).timestamp() * 1000)
 
-    def validate_checksum_internal(line: str, index: int, algo_string: str) -> bool:
-        algo = ActLogChecksumType[algo_string]
+    def validate_checksum_internal(line: str, index: int, algo: ActLogChecksumType) -> bool:
         parts = line.split('|')
         check_hash = parts[-1]
         to_hash = f'{"|".join(parts[:-1])}|{index}'.encode('utf-8')
