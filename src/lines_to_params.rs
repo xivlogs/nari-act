@@ -71,13 +71,14 @@ pub(crate) fn ability_from_params(inp: Vec<&str>) -> AbilityParams {
 #[pyfunction]
 #[pyo3(text_signature = "(params: list[str]) -> list[int]")]
 pub(crate) fn action_effect_from_params(inp: Vec<&str>) -> ActionEffectParams {
-    let num = parser::u64_from_param(inp);
-    let param0 = (num >> 56) as u8;
-    let param1 = (num >> 48) as u8;
-    let param2 = (num >> 40) as u8;
-    let param3 = (num >> 32) as u8;
-    let param4 = (num >> 16) as u16;
-    let param5 = (num >> 8) as u8;
+    let mut num = parser::u32_from_param(inp[0]);
+    let param0 = (&num >> 24) as u8;
+    let param1 = (&num >> 16) as u8;
+    let param2 = (&num >> 8) as u8;
+    let param3 = num as u8;
+    num = parser::u32_from_param(inp[1]);
+    let param4 = (&num >> 16) as u16;
+    let param5 = (&num >> 8) as u8;
     let param6 = num as u8;
     (param0, param1, param2, param3, param4, param5, param6)
 }

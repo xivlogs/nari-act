@@ -3,6 +3,7 @@ use pyo3::prelude::*;
 use sha2::Sha256;
 use std::num::ParseIntError;
 
+
 #[pyfunction]
 #[pyo3(text_signature = "(time_str: str) -> int")]
 pub(crate) fn date_from_cs_string(time_str: &str) -> i64 {
@@ -38,7 +39,7 @@ pub(crate) fn pad8(str: &str) -> String {
 /// Gets [to_hash, check] from a line based on algo
 #[pyfunction]
 #[pyo3(text_signature = "(line: str, index: int, algo: str) -> bool")]
-pub(crate) fn validate_checksum(line: &str, index: i32, alg: &str) -> bool {
+pub(crate) fn validate_checksum_internal(line: &str, index: i32, alg: &str) -> bool {
     let (md5, sub) = match alg {
         "md5" => (true, 32),
         _ => (false, 16),
@@ -55,5 +56,35 @@ pub(crate) fn validate_checksum(line: &str, index: i32, alg: &str) -> bool {
         hasher.update(&line[..&last - &sub]);
         hasher.update(&index.to_string());
         hasher.finalize()[..8] == hash
+    }
+}
+
+fn encode_hex(v: &Vec<u8>) -> String {
+    v.iter().map(|u| {
+        let a = get_char(u >> 4);
+        let b = get_char(u & 0xf);
+        a.to_string() + &b.to_string()
+    }).collect::<String>()
+}
+
+fn get_char(u: u8) -> char {
+    match u {
+        0 => '0',
+        1 => '1',
+        2 => '2',
+        3 => '3',
+        4 => '4',
+        5 => '5',
+        6 => '6',
+        7 => '7',
+        8 => '8',
+        9 => '9',
+        10 => 'a',
+        11 => 'b',
+        12 => 'c',
+        13 => 'd',
+        14 => 'e',
+        15 => 'f',
+        _ => '0'
     }
 }

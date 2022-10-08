@@ -1,5 +1,5 @@
 [package]
-name = "nari_act_rust"
+name = "nari-act-rust"
 version = "0.1.0"
 edition = "2021"
 
