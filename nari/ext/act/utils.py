@@ -1,5 +1,5 @@
 """Helpful utilities"""
-from enum import Enum
+from enum import IntEnum
 from datetime import datetime
 from hashlib import md5, sha256
 
@@ -12,10 +12,10 @@ DEFAULT_DATE_FORMAT: str = '%Y-%m-%dT%H:%M:%S.%f%z'
 
 
 # pylint: disable=invalid-name
-class ActLogChecksumType(Enum):
+class ActLogChecksumType(IntEnum):
     """List of hashsum algorithms used by different ACT versions"""
-    MD5 = "md5"
-    SHA256 = "sha256"
+    MD5 = 0
+    SHA256 = 1
 # pylint: enable=invalid-name
 
 
@@ -50,4 +50,4 @@ def validate_checksum(line: str, index: int, algo: ActLogChecksumType = ActLogCh
     Given some line 1|foo|bar|baz|a823425f532c540667195f641dd3649b, and an index of 1, then the md5sum of
     1|foo|bar|baz|1 (where 1 is the index) should be a823425f532c540667195f641dd3649b (which is the checksum value)
     """
-    return validate_checksum_internal(line, index, str(algo.value))
+    return validate_checksum_internal(line, index, algo)

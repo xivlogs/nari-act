@@ -5,7 +5,6 @@ mod utils;
 
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
-use pyo3::wrap_pymodule;
 
 
 /// Main module for rust extensions with nari-act
@@ -29,7 +28,6 @@ fn nari_act_rust(py: Python, m: &PyModule) -> PyResult<()> {
     // https://github.com/PyO3/pyo3/issues/2644#issuecomment-1259721976 For PyO3 v0.17.x >=
     let sys: &PyModule = py.import("sys").unwrap();
     let sys_modules: &PyDict = sys.getattr("modules")?.downcast()?;
-    sys_modules.set_item("nari_act_rust.parser", m.getattr("parser")?)?;
     sys_modules.set_item("nari_act_rust.utils", m.getattr("utils")?)?;
 
     Ok(())

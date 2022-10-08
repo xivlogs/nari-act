@@ -39,9 +39,9 @@ pub(crate) fn pad8(str: &str) -> String {
 /// Gets [to_hash, check] from a line based on algo
 #[pyfunction]
 #[pyo3(text_signature = "(line: str, index: int, algo: str) -> bool")]
-pub(crate) fn validate_checksum_internal(line: &str, index: i32, alg: &str) -> bool {
+pub(crate) fn validate_checksum_internal(line: &str, index: i32, alg: u32) -> bool {
     let (md5, sub) = match alg {
-        "md5" => (true, 32),
+        0 => (true, 32),
         _ => (false, 16),
     };
     let last = line.len();

@@ -1,6 +1,3 @@
-use crate::utils;
-use pyo3::prelude::*;
-
 /// Param to 2-byte integer
 pub(crate) fn u16_from_param(inp: &str) -> u16 {
     u16::from_str_radix(inp, 16).unwrap()
