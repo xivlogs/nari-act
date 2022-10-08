@@ -27,6 +27,7 @@ except ImportError:
         return int(datetime.strptime(f'{datestr[:26]}{datestr[-6:]}', DEFAULT_DATE_FORMAT).timestamp() * 1000)
 
     def validate_checksum_internal(line: str, index: int, algo: ActLogChecksumType) -> bool:
+        """Validates an ACT log line internal function"""
         parts = line.split('|')
         check_hash = parts[-1]
         to_hash = f'{"|".join(parts[:-1])}|{index}'.encode('utf-8')
