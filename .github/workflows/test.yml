@@ -67,6 +67,11 @@ jobs:
         cache-dependency-path: |
           **/setup.py
 
+    - name: Setup Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: '1.62.0'
+
     - name: Install development dependencies
       run: |
         pip install .[dev]
