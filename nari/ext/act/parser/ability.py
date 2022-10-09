@@ -36,7 +36,7 @@ except ImportError:
             ability=ability,
             sequence_id=sequence_id,
         )
-    
+
 def actor_update_resources_and_positions(actor: Actor, params: list[str]):
     """Updates the actor position and resources values based on ACT packet"""
     # apparently when the target actor is 'none', then the *source* actor's resources will be empty will also be empty
