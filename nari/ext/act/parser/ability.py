@@ -1,6 +1,5 @@
 """Parse ability (action) data from ACT log line"""
 from struct import unpack
-from typing import Tuple, List
 
 from nari.types import Timestamp
 from nari.types.actioneffect import ActionEffect
