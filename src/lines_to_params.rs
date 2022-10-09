@@ -46,22 +46,14 @@ pub(crate) fn ability_from_params(timestamp: i64, inp: Vec<&str>) -> PyObject {
         .collect::<Vec<f32>>();
     let sequence = parser::u32_from_param(col.first().unwrap());
     Python::with_gil(|py| {
-        let actor = PyModule::import(py, "nari.types.actor").unwrap()
-            .getattr("Actor").unwrap();
+        let source_actor_obj = create_id_name_pair(py, "nari.types.actor", "Actor", source_actor);
+        let target_actor_obj = create_id_name_pair(py, "nari.types.actor", "Actor", target_actor);
+        update_position(source_actor_obj, source_position);
+        update_position(target_actor_obj, target_position);
+        update_resources(source_actor_obj, source_resources);
+        update_resources(target_actor_obj, target_resources);
 
-        let source_actor = actor.call1(parse_id_name_pair(source_actor)).unwrap();
-        let target_actor = actor.call1(parse_id_name_pair(target_actor)).unwrap();
-        let source_resources_param = ((&source_resources[0]).to_owned(),(&source_resources[1]).to_owned(),(&source_resources[2]).to_owned(),(&source_resources[3]).to_owned(),(&source_resources[4]).to_owned(),(&source_resources[5]).to_owned());
-        let target_resources_param = ((&target_resources[0]).to_owned(),(&target_resources[1]).to_owned(),(&target_resources[2]).to_owned(),(&target_resources[3]).to_owned(),(&target_resources[4]).to_owned(),(&target_resources[5]).to_owned());
-        source_actor.getattr("resources").unwrap().call_method1("update", source_resources_param).unwrap();
-        target_actor.getattr("resources").unwrap().call_method1("update", target_resources_param).unwrap();
-        let source_position_param = ((&source_position[0]).to_owned(),(&source_position[1]).to_owned(),(&source_position[2]).to_owned(),(&source_position[3]).to_owned());
-        let target_position_param = ((&target_position[0]).to_owned(),(&target_position[1]).to_owned(),(&target_position[2]).to_owned(),(&target_position[3]).to_owned());
-        source_actor.getattr("position").unwrap().call_method1("update", source_position_param).unwrap();
-        target_actor.getattr("position").unwrap().call_method1("update", target_position_param).unwrap();
-
-        let ability_event = PyModule::import(py, "nari.types.ability").unwrap()
-            .getattr("Ability").unwrap().call1(parse_id_name_pair(ability)).unwrap();
+        let ability_event = create_id_name_pair(py, "nari.types.ability", "Ability", ability);
 
         let action_effect = PyModule::import(py, "nari.types.actioneffect").unwrap()
             .getattr("ActionEffect").unwrap();
@@ -83,8 +75,8 @@ pub(crate) fn ability_from_params(timestamp: i64, inp: Vec<&str>) -> PyObject {
         let kwargs = PyDict::new(py);
         kwargs.set_item("timestamp", timestamp).unwrap();
         kwargs.set_item("action_effects", action_effects).unwrap();
-        kwargs.set_item("source_actor", source_actor).unwrap();
-        kwargs.set_item("target_actor", target_actor).unwrap();
+        kwargs.set_item("source_actor", source_actor_obj).unwrap();
+        kwargs.set_item("target_actor", target_actor_obj).unwrap();
         kwargs.set_item("ability", ability_event).unwrap();
         kwargs.set_item("sequence_id", sequence).unwrap();
 
@@ -142,4 +134,32 @@ pub(crate) fn statuslist_from_params(inp: Vec<&str>) -> StatuslistParams {
             .map(|x| status_effect_from_params(x.to_vec()))
             .collect(),
     )
+}
+
+fn create_id_name_pair<'a>(py: Python<'a>, module: &'a str, class: &'a str, id_name_pair: Vec<&'a str>) -> &'a PyAny {
+    PyModule::import(py, module).unwrap()
+        .getattr(class).unwrap()
+        .call1(parse_id_name_pair(id_name_pair)).unwrap()
+}
+
+fn update_position(actor: &PyAny, position: Vec<f32>) {
+    actor.getattr("position").unwrap()
+        .call_method1("update", (
+            (&position[0]).to_owned(),
+            (&position[1]).to_owned(),
+            (&position[2]).to_owned(),
+            (&position[3]).to_owned())
+        ).unwrap();
+}
+
+fn update_resources(actor: &PyAny, resources: Vec<u32>) {
+    actor.getattr("resources").unwrap()
+        .call_method1("update", (
+            (&resources[0]).to_owned(),
+            (&resources[1]).to_owned(),
+            (&resources[2]).to_owned(),
+            (&resources[3]).to_owned(),
+            (&resources[4]).to_owned(),
+            (&resources[5]).to_owned())
+        ).unwrap();
 }
