@@ -26,20 +26,24 @@ pub(crate) fn parse_id_name_pair(inp: Vec<&str>) -> (u32, &str) {
 /// Params to ability
 #[pyfunction]
 #[pyo3(text_signature = "(timestamp: int, params: list[str]) -> Ability")]
-pub(crate) fn ability_from_params(timestamp: i64, inp: Vec<&str>) -> &PyAny {
+pub(crate) fn ability_from_params(timestamp: i64, inp: Vec<&str>) -> PyObject {
     let mut col = inp;
     let source_actor = col.drain(..2).collect::<Vec<&str>>();
     let ability = col.drain(..2).collect::<Vec<&str>>();
     let target_actor = col.drain(..2).collect::<Vec<&str>>();
     let action_effects = col.drain(..16).collect::<Vec<&str>>();
-    let source_resources: (u32, u32, u32, u32, u32, u32) = col.drain(..6)
-        .map(|x| parser::u32_from_param(x))
-        .collect_tuple().unwrap();
-    let source_position = col.drain(..4).collect::<Vec<&str>>();
-    let target_resources: (u32, u32, u32, u32, u32, u32) = col.drain(..6)
-        .map(|x| parser::u32_from_param(x))
-        .collect_tuple().unwrap();
-    let target_position = col.drain(..4).collect::<Vec<&str>>();
+    let source_resources = col.drain(..6)
+        .map(|x| parser::u32_from_str(x))
+        .collect::<Vec<u32>>();
+    let source_position = col.drain(..4)
+        .map(|x| parser::f32_from_str(x))
+        .collect::<Vec<f32>>();
+    let target_resources = col.drain(..6)
+        .map(|x| parser::u32_from_str(x))
+        .collect::<Vec<u32>>();
+    let target_position = col.drain(..4)
+        .map(|x| parser::f32_from_str(x))
+        .collect::<Vec<f32>>();
     let sequence = parser::u32_from_param(col.first().unwrap());
     Python::with_gil(|py| {
         let actor = PyModule::import(py, "nari.types.actor").unwrap()
@@ -47,18 +51,14 @@ pub(crate) fn ability_from_params(timestamp: i64, inp: Vec<&str>) -> &PyAny {
 
         let source_actor = actor.call1(parse_id_name_pair(source_actor)).unwrap();
         let target_actor = actor.call1(parse_id_name_pair(target_actor)).unwrap();
-        let source_resources_param = source_resources;
-        let target_resources_param = target_resources;
-        source_actor.getattr("resources").unwrap().call1(source_resources_param).unwrap();
-        target_actor.getattr("resources").unwrap().call1(target_resources_param).unwrap();
-        source_actor.getattr("position").unwrap().call1(source_position
-            .iter()
-            .map(|x| parser::u32_from_param(x))
-            .collect()).unwrap();
-        target_actor.getattr("position").unwrap().call1(target_position
-            .iter()
-            .map(|x| parser::u32_from_param(x))
-            .collect()).unwrap();
+        let source_resources_param = ((&source_resources[0]).to_owned(),(&source_resources[1]).to_owned(),(&source_resources[2]).to_owned(),(&source_resources[3]).to_owned(),(&source_resources[4]).to_owned(),(&source_resources[5]).to_owned());
+        let target_resources_param = ((&target_resources[0]).to_owned(),(&target_resources[1]).to_owned(),(&target_resources[2]).to_owned(),(&target_resources[3]).to_owned(),(&target_resources[4]).to_owned(),(&target_resources[5]).to_owned());
+        source_actor.getattr("resources").unwrap().call_method1("update", source_resources_param).unwrap();
+        target_actor.getattr("resources").unwrap().call_method1("update", target_resources_param).unwrap();
+        let source_position_param = ((&source_position[0]).to_owned(),(&source_position[1]).to_owned(),(&source_position[2]).to_owned(),(&source_position[3]).to_owned());
+        let target_position_param = ((&target_position[0]).to_owned(),(&target_position[1]).to_owned(),(&target_position[2]).to_owned(),(&target_position[3]).to_owned());
+        source_actor.getattr("position").unwrap().call_method1("update", source_position_param).unwrap();
+        target_actor.getattr("position").unwrap().call_method1("update", target_position_param).unwrap();
 
         let ability_event = PyModule::import(py, "nari.types.ability").unwrap()
             .getattr("Ability").unwrap().call1(parse_id_name_pair(ability)).unwrap();
@@ -89,7 +89,7 @@ pub(crate) fn ability_from_params(timestamp: i64, inp: Vec<&str>) -> &PyAny {
         kwargs.set_item("sequence_id", sequence).unwrap();
 
         PyModule::import(py, "nari.types.event.ability").unwrap()
-            .getattr("Ability").unwrap().call((), Some(kwargs)).unwrap()
+            .getattr("Ability").unwrap().call((), Some(kwargs)).unwrap().to_object(py)
     })
 }
 

@@ -13,12 +13,12 @@ pub(crate) fn u16x2_from_param(inp: &str) -> (u16, u16) {
 
 /// Param to 4-byte float
 pub(crate) fn f32_from_param(inp: &str) -> f32 {
-    f32::from_bits(u32::from_str_radix(inp, 16).unwrap())
+    f32::from_bits(u32::from_str_radix(inp.trim(), 16).unwrap())
 }
 
 /// Param to 4-byte integer
 pub(crate) fn u32_from_param(inp: &str) -> u32 {
-    u32::from_str_radix(inp, 16).unwrap()
+    u32::from_str_radix(inp.trim(), 16).unwrap()
 }
 
 /// Param to four 1-byte integers
@@ -29,4 +29,22 @@ pub(crate) fn u8x4_from_param(inp: &str) -> (u8, u8, u8, u8) {
     let param2 = (&num >> 8) as u8;
     let param3 = num as u8;
     (param0, param1, param2, param3)
+}
+
+pub(crate) fn u32_from_str(inp: &str) -> u32 {
+    if inp.trim().is_empty() {
+        0
+    }
+    else {
+        inp.parse::<u32>().unwrap()
+    }
+}
+
+pub(crate) fn f32_from_str(inp: &str) -> f32 {
+    if inp.trim().is_empty() {
+        0.0
+    }
+    else {
+        inp.parse::<f32>().unwrap()
+    }
 }

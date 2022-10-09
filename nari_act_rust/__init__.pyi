@@ -1,3 +1,4 @@
-def ability_from_params(params: list[str]) -> tuple[
-        tuple[int, str], list[int], list[float], tuple[int, str], list[int], list[float], tuple[int, str], list[
-            list[str]], int]: ...
+from nari.types.event.ability import Ability
+
+
+def ability_from_params(params: list[str]) -> Ability: ...
