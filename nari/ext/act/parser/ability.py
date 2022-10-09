@@ -13,6 +13,7 @@ try:
     from nari_act_rust import ability_from_params
 except ImportError:
     def ability_from_params(timestamp: Timestamp, params: list[str]) -> Ability:
+        """Internal function of ability_from_logline"""
         source_actor = Actor(*params[0:2])
         ability = AbilityEvent(*params[2:4])
         target_actor = Actor(*params[4:6])
