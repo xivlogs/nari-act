@@ -23,27 +23,9 @@ except ImportError:
             action_effects.append(
                 action_effect_from_logline(params[index:index + 2])
             )
-        # apparently when the target actor is 'none', then the *source* actor's resources will be empty will also be empty
-        # also apparently, other time(s) it will be blank just because /shrug
-        try:
-            source_actor.resources.update(
-                *[int(x) for x in params[22:28]]
-            )
-            source_actor.position.update(
-                *[float(x) for x in params[28:32]]
-            )
-        except ValueError:
-            pass
+        actor_update_resources_and_positions(source_actor, params[22:32])
+        actor_update_resources_and_positions(target_actor, params[32:42])
 
-        try:
-            target_actor.resources.update(
-                *[int(x) for x in params[32:38]]
-            )
-            target_actor.position.update(
-                *[float(x) for x in params[38:42]]
-            )
-        except ValueError:
-            pass
         sequence_id = int(params[42], 16)
 
         return Ability(
@@ -54,6 +36,20 @@ except ImportError:
             ability=ability,
             sequence_id=sequence_id,
         )
+    
+def actor_update_resources_and_positions(actor: Actor, params: list[str]):
+    """Updates the actor position and resources values based on ACT packet"""
+    # apparently when the target actor is 'none', then the *source* actor's resources will be empty will also be empty
+    # also apparently, other time(s) it will be blank just because /shrug
+    try:
+        actor.resources.update(
+            *[int(x) for x in params[0:6]]
+        )
+        actor.position.update(
+            *[float(x) for x in params[6:10]]
+        )
+    except ValueError:
+        pass
 
 def action_effect_from_logline(params: list[str]) -> ActionEffect:
     """Takes the eight bytes from an ACT log line and returns ActionEffect data"""
