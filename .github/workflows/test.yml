@@ -69,7 +69,6 @@ jobs:
 
     - name: Install development dependencies
       run: |
-        pip install setuptools-rust
         pip install .[dev]
         pip list -v
 

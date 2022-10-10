@@ -6,6 +6,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 dev_requirements = [
     'mypy==0.942',
     'pylint==2.13.4',
+    'setuptools_rust==1.5.2'
 ]
 
 docs_requirements = [
