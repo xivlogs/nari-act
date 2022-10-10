@@ -52,6 +52,7 @@ pub(crate) fn ability_from_params(timestamp: i64, inp: Vec<&str>) -> PyObject {
             .getattr("ActionEffect").unwrap();
 
         let action_effects = action_effects
+            .iter()
             .map(|x| {
                 let (param0, param1, severity, effect_category, value, flags, multiplier) = x;
                 let kwargs = PyDict::new(py);
