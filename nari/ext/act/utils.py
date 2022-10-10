@@ -1,5 +1,4 @@
 """Helpful utilities"""
-from enum import IntEnum
 from datetime import datetime
 from hashlib import sha256
 
