@@ -1,6 +1,7 @@
 """Helpful utilities"""
 from datetime import datetime
 from hashlib import sha256
+from typing import Callable
 
 from nari.types import Timestamp
 
@@ -15,8 +16,6 @@ except ImportError:
         """Look, this is dirty. This is wrong. Please someone find a better way to do this."""
         return int(datetime.strptime(f'{datestr[:26]}{datestr[-6:]}', DEFAULT_DATE_FORMAT).timestamp() * 1000)
 
-    validate_checksum_internal_rs = None
-
 
 def validate_checksum_internal_py(line: str, index: int) -> bool:
     """Validates an ACT log line internal function"""
@@ -26,7 +25,7 @@ def validate_checksum_internal_py(line: str, index: int) -> bool:
 
     return sha256(to_hash).hexdigest()[:16] == check_hash
 
-validate_checksum_internal = validate_checksum_internal_rs or validate_checksum_internal_py
+validate_checksum_internal: Callable[[str, int], bool] = validate_checksum_internal_rs or validate_checksum_internal_py
 
 def date_from_act_timestamp(datestr: str) -> Timestamp:
     """Parse timestamp from ACT log into a Timestamp"""

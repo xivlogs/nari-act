@@ -1,5 +1,6 @@
 """Parse ability (action) data from ACT log line"""
 from struct import unpack
+from typing import Callable
 
 from nari.types import Timestamp
 from nari.types.actioneffect import ActionEffect
@@ -8,12 +9,11 @@ from nari.types.actor import Actor
 from nari.types.ability import Ability as AbilityEvent
 from nari.types.event import Event
 from nari.ext.act.exceptions import ActLineParsingException
-from nari.ext.act.types import ActEventFn
 
 try:
     from nari_act_rust import ability_from_params as ability_from_params_rs
 except ImportError:
-    ability_from_params_rs = None
+    pass
 
 def ability_from_params_py(timestamp: Timestamp, params: list[str]) -> Ability:
     """Internal function of ability_from_logline"""
@@ -55,7 +55,7 @@ def actor_update_resources_and_positions(actor: Actor, params: list[str]):
     except ValueError:
         pass
 
-ability_from_params: ActEventFn = ability_from_params_rs or ability_from_params_py
+ability_from_params: Callable[[int, list[str]], Ability] = ability_from_params_rs or ability_from_params_py
 
 def action_effect_from_logline(params: list[str]) -> ActionEffect:
     """Takes the eight bytes from an ACT log line and returns ActionEffect data"""
