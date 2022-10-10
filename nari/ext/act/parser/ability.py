@@ -8,37 +8,41 @@ from nari.types.actor import Actor
 from nari.types.ability import Ability as AbilityEvent
 from nari.types.event import Event
 from nari.ext.act.exceptions import ActLineParsingException
+from nari.ext.act.types import ActEventFn
 
 try:
-    from nari_act_rust import ability_from_params
+    from nari_act_rust import ability_from_params as ability_from_params_rs
 except ImportError:
-    def ability_from_params(timestamp: Timestamp, params: list[str]) -> Ability:
-        """Internal function of ability_from_logline"""
-        source_actor = Actor(*params[0:2])
-        ability = AbilityEvent(*params[2:4])
-        target_actor = Actor(*params[4:6])
-        action_effects = []
-        for i in range(0, 16, 2):
-            index = i + 6
-            action_effects.append(
-                action_effect_from_logline(params[index:index + 2])
-            )
-        actor_update_resources_and_positions(source_actor, params[22:32])
-        actor_update_resources_and_positions(target_actor, params[32:42])
+    ability_from_params_rs = None
 
-        sequence_id = int(params[42], 16)
-
-        return Ability(
-            timestamp=timestamp,
-            action_effects=action_effects,
-            source_actor=source_actor,
-            target_actor=target_actor,
-            ability=ability,
-            sequence_id=sequence_id,
+def ability_from_params_py(timestamp: Timestamp, params: list[str]) -> Ability:
+    """Internal function of ability_from_logline"""
+    source_actor = Actor(*params[0:2])
+    ability = AbilityEvent(*params[2:4])
+    target_actor = Actor(*params[4:6])
+    action_effects = []
+    for i in range(0, 16, 2):
+        index = i + 6
+        action_effects.append(
+            action_effect_from_logline(params[index:index + 2])
         )
+    actor_update_resources_and_positions(source_actor, params[22:32])
+    actor_update_resources_and_positions(target_actor, params[32:42])
+
+    sequence_id = int(params[42], 16)
+
+    return Ability(
+        timestamp=timestamp,
+        action_effects=action_effects,
+        source_actor=source_actor,
+        target_actor=target_actor,
+        ability=ability,
+        sequence_id=sequence_id,
+    )
 
 def actor_update_resources_and_positions(actor: Actor, params: list[str]):
-    """Updates the actor position and resources values based on ACT packet"""
+    """Updates the actor position and resources values based on ACT packet
+    used in ability_from_params_py"""
     # apparently when the target actor is 'none', then the *source* actor's resources will be empty will also be empty
     # also apparently, other time(s) it will be blank just because /shrug
     try:
@@ -50,6 +54,8 @@ def actor_update_resources_and_positions(actor: Actor, params: list[str]):
         )
     except ValueError:
         pass
+
+ability_from_params: ActEventFn = ability_from_params_rs or ability_from_params_py
 
 def action_effect_from_logline(params: list[str]) -> ActionEffect:
     """Takes the eight bytes from an ACT log line and returns ActionEffect data"""
