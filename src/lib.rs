@@ -1,4 +1,3 @@
-mod lines_from_params;
 mod parser;
 mod utils;
 
@@ -9,10 +8,10 @@ use pyo3::types::PyDict;
 /// Main module for rust extensions with nari-act
 #[pymodule]
 fn nari_act_rust(py: Python, m: &PyModule) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(lines_from_params::ability_from_params, m)?)?;
-    m.add_function(wrap_pyfunction!(lines_from_params::action_effect_from_params, m)?)?;
-    m.add_function(wrap_pyfunction!(lines_from_params::status_effect_from_params, m)?)?;
-    m.add_function(wrap_pyfunction!(lines_from_params::statuslist_from_params, m)?)?;
+    m.add_function(wrap_pyfunction!(parser::ability_from_params, m)?)?;
+    m.add_function(wrap_pyfunction!(parser::action_effect_from_params, m)?)?;
+    m.add_function(wrap_pyfunction!(parser::status_effect_from_params, m)?)?;
+    m.add_function(wrap_pyfunction!(parser::statuslist_from_params, m)?)?;
 
     let utils_mod = PyModule::new(py, "utils")?;
     utils_mod.add_function(wrap_pyfunction!(utils::date_from_cs_string, m)?)?;
