@@ -1,7 +1,7 @@
 import unittest
 
 from nari.ext.act.utils import validate_checksum
-from nari.ext.act.exceptions import InvalidActChecksumAlgorithm
+from nari.ext.act.exceptions import InvalidActChecksum
 
 
 class TestLineChecksum(unittest.TestCase):
@@ -18,7 +18,7 @@ class TestLineChecksum(unittest.TestCase):
         Tests ACT checksum validation against an old version
         """
         test_line = "253|2020-09-10T22:36:46.6756722-04:00|FFXIV PLUGIN VERSION: 2.0.6.8|4b16c21ba358b9543c75ad2f090cac53"
-        with self.assertRaises(InvalidActChecksumAlgorithm):
+        with self.assertRaises(InvalidActChecksum):
             validate_checksum(test_line, 1)
 
 
