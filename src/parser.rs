@@ -21,7 +21,10 @@ pub(crate) fn ability_from_params(timestamp: i64, inp: Vec<&str>) -> PyObject {
     let source_actor = col.drain(..2).collect::<Vec<&str>>();
     let ability = col.drain(..2).collect::<Vec<&str>>();
     let target_actor = col.drain(..2).collect::<Vec<&str>>();
-    let action_effects = col.drain(..16).collect::<Vec<&str>>();
+    let action_effects = col.drain(..16).collect::<Vec<&str>>()
+        .chunks(2)
+        .map(|x| action_effect_from_params(x.to_vec()))
+        .collect::<Vec<ActionEffectParams>>();
     let source_resources = col.drain(..6)
         .map(|x| number_parser::u32_from_str(x))
         .collect::<Vec<u32>>();
@@ -49,9 +52,8 @@ pub(crate) fn ability_from_params(timestamp: i64, inp: Vec<&str>) -> PyObject {
             .getattr("ActionEffect").unwrap();
 
         let action_effects = action_effects
-            .chunks(2)
             .map(|x| {
-                let (param0, param1, severity, effect_category, value, flags, multiplier) = action_effect_from_params(x.to_vec());
+                let (param0, param1, severity, effect_category, value, flags, multiplier) = x;
                 let kwargs = PyDict::new(py);
                 kwargs.set_item("effect_category", effect_category).unwrap();
                 kwargs.set_item("severity", severity).unwrap();
