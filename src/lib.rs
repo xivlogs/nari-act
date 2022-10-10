@@ -1,5 +1,6 @@
 mod parser;
 mod utils;
+mod number_parser;
 
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -15,8 +16,6 @@ fn nari_act_rust(py: Python, m: &PyModule) -> PyResult<()> {
 
     let utils_mod = PyModule::new(py, "utils")?;
     utils_mod.add_function(wrap_pyfunction!(utils::date_from_cs_string, m)?)?;
-    utils_mod.add_function(wrap_pyfunction!(utils::pad4, m)?)?;
-    utils_mod.add_function(wrap_pyfunction!(utils::pad8, m)?)?;
     utils_mod.add_function(wrap_pyfunction!(utils::validate_checksum_internal, m)?)?;
     m.add_submodule(utils_mod)?;
 

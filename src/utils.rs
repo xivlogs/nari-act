@@ -21,20 +21,6 @@ fn decode_hex(s: &str) -> Result<Vec<u8>, ParseIntError> {
         .collect()
 }
 
-/// Pads string to 4 length with 0 in front
-#[pyfunction]
-#[pyo3(text_signature = "(src_str: str) -> str")]
-pub(crate) fn pad4(str: &str) -> String {
-    format!("{:0>4}", str)
-}
-
-/// Pads string to 8 length with 0 in front
-#[pyfunction]
-#[pyo3(text_signature = "(src_str: str) -> str")]
-pub(crate) fn pad8(str: &str) -> String {
-    format!("{:0>8}", str)
-}
-
 /// Gets [to_hash, check] from a line based on algo
 #[pyfunction]
 #[pyo3(text_signature = "(line: str, index: int) -> bool")]

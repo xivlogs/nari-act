@@ -1,4 +1,4 @@
-use crate::parser;
+use crate::number_parser;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 
@@ -18,7 +18,7 @@ type StatuslistParams<'a> = (
 #[pyo3(text_signature = "(name_id_pair: list[str]) -> (int, str)")]
 pub(crate) fn parse_id_name_pair(inp: Vec<&str>) -> (u32, &str) {
     (
-        parser::u32_from_param(inp.first().unwrap()),
+        number_parser::u32_from_param(inp.first().unwrap()),
         inp.last().unwrap(),
     )
 }
@@ -33,18 +33,18 @@ pub(crate) fn ability_from_params(timestamp: i64, inp: Vec<&str>) -> PyObject {
     let target_actor = col.drain(..2).collect::<Vec<&str>>();
     let action_effects = col.drain(..16).collect::<Vec<&str>>();
     let source_resources = col.drain(..6)
-        .map(|x| parser::u32_from_str(x))
+        .map(|x| number_parser::u32_from_str(x))
         .collect::<Vec<u32>>();
     let source_position = col.drain(..4)
-        .map(|x| parser::f32_from_str(x))
+        .map(|x| number_parser::f32_from_str(x))
         .collect::<Vec<f32>>();
     let target_resources = col.drain(..6)
-        .map(|x| parser::u32_from_str(x))
+        .map(|x| number_parser::u32_from_str(x))
         .collect::<Vec<u32>>();
     let target_position = col.drain(..4)
-        .map(|x| parser::f32_from_str(x))
+        .map(|x| number_parser::f32_from_str(x))
         .collect::<Vec<f32>>();
-    let sequence = parser::u32_from_param(col.first().unwrap());
+    let sequence = number_parser::u32_from_param(col.first().unwrap());
     Python::with_gil(|py| {
         let source_actor_obj = create_id_name_pair(py, "nari.types.actor", "Actor", source_actor);
         let target_actor_obj = create_id_name_pair(py, "nari.types.actor", "Actor", target_actor);
@@ -89,12 +89,12 @@ pub(crate) fn ability_from_params(timestamp: i64, inp: Vec<&str>) -> PyObject {
 #[pyfunction]
 #[pyo3(text_signature = "(params: list[str]) -> list[int]")]
 pub(crate) fn action_effect_from_params(inp: Vec<&str>) -> ActionEffectParams {
-    let mut num = parser::u32_from_param(inp[0]);
+    let mut num = number_parser::u32_from_param(inp[0]);
     let param0 = (&num >> 24) as u8;
     let param1 = (&num >> 16) as u8;
     let severity = (&num >> 8) as u8;
     let effect_category = num as u8;
-    num = parser::u32_from_param(inp[1]);
+    num = number_parser::u32_from_param(inp[1]);
     let value = (&num >> 16) as u16;
     let flags = (&num >> 8) as u8;
     let multiplier = num as u8;
@@ -105,12 +105,12 @@ pub(crate) fn action_effect_from_params(inp: Vec<&str>) -> ActionEffectParams {
 #[pyfunction]
 #[pyo3(text_signature = "(params: list[str]) -> (int, int, float, int")]
 pub(crate) fn status_effect_from_params(inp: Vec<&str>) -> StatusEffectParams {
-    let (param0, param1) = parser::u16x2_from_param(inp.get(0).unwrap());
+    let (param0, param1) = number_parser::u16x2_from_param(inp.get(0).unwrap());
     (
         param0,
         param1,
-        parser::f32_from_param(inp.get(1).unwrap()),
-        parser::u32_from_param(inp.get(2).unwrap()),
+        number_parser::f32_from_param(inp.get(1).unwrap()),
+        number_parser::u32_from_param(inp.get(2).unwrap()),
     )
 }
 
@@ -127,8 +127,8 @@ pub(crate) fn statuslist_from_params(inp: Vec<&str>) -> StatuslistParams {
     (
         parse_id_name_pair(actor),
         class.first().unwrap(),
-        resources.iter().map(|x| parser::u32_from_param(x)).collect(),
-        position.iter().map(|x| parser::f32_from_param(x)).collect(),
+        resources.iter().map(|x| number_parser::u32_from_param(x)).collect(),
+        position.iter().map(|x| number_parser::f32_from_param(x)).collect(),
         status_effects
             .chunks(3)
             .map(|x| status_effect_from_params(x.to_vec()))
