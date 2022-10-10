@@ -10,8 +10,6 @@ from nari.ext.act.parser import ID_MAPPINGS, ActEventType
 from nari.ext.act.exceptions import InvalidActChecksum
 from nari.ext.act.utils import date_from_act_timestamp, validate_checksum
 
-# The last version of ACT to use MD5 checksums
-# We default to SHA256, but if the version is <= 2.2.1.6 we switch to MD5
 LAST_MD5_VERSION = SemanticVersion(2,2,1,6)
 
 
