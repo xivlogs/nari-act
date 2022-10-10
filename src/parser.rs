@@ -13,16 +13,6 @@ type StatuslistParams<'a> = (
     Vec<(u16, u16, f32, u32)>,
 );
 
-/// Get id name type from tuple
-#[pyfunction]
-#[pyo3(text_signature = "(name_id_pair: list[str]) -> (int, str)")]
-pub(crate) fn parse_id_name_pair(inp: Vec<&str>) -> (u32, &str) {
-    (
-        number_parser::u32_from_param(inp.first().unwrap()),
-        inp.last().unwrap(),
-    )
-}
-
 /// Params to ability
 #[pyfunction]
 #[pyo3(text_signature = "(timestamp: int, params: list[str]) -> Ability")]
@@ -85,38 +75,9 @@ pub(crate) fn ability_from_params(timestamp: i64, inp: Vec<&str>) -> PyObject {
     })
 }
 
-/// Params to action_effect
-#[pyfunction]
-#[pyo3(text_signature = "(params: list[str]) -> list[int]")]
-pub(crate) fn action_effect_from_params(inp: Vec<&str>) -> ActionEffectParams {
-    let mut num = number_parser::u32_from_param(inp[0]);
-    let param0 = (&num >> 24) as u8;
-    let param1 = (&num >> 16) as u8;
-    let severity = (&num >> 8) as u8;
-    let effect_category = num as u8;
-    num = number_parser::u32_from_param(inp[1]);
-    let value = (&num >> 16) as u16;
-    let flags = (&num >> 8) as u8;
-    let multiplier = num as u8;
-    (param0, param1, severity, effect_category, value, flags, multiplier)
-}
-
-/// Params to status_effect
-#[pyfunction]
-#[pyo3(text_signature = "(params: list[str]) -> (int, int, float, int")]
-pub(crate) fn status_effect_from_params(inp: Vec<&str>) -> StatusEffectParams {
-    let (param0, param1) = number_parser::u16x2_from_param(inp.get(0).unwrap());
-    (
-        param0,
-        param1,
-        number_parser::f32_from_param(inp.get(1).unwrap()),
-        number_parser::u32_from_param(inp.get(2).unwrap()),
-    )
-}
-
 /// Params to statuslist
 #[pyfunction]
-#[pyo3(text_signature = "(params: list[str]) -> list[any]")]
+#[pyo3(text_signature = "(params: list[str]) -> tuple[tuple[int, str], str, list[int], list[int], list[tuple[int, int, int, int]]]")]
 pub(crate) fn statuslist_from_params(inp: Vec<&str>) -> StatuslistParams {
     let mut col = inp;
     let actor = col.drain(..2).collect::<Vec<&str>>();
@@ -136,12 +97,16 @@ pub(crate) fn statuslist_from_params(inp: Vec<&str>) -> StatuslistParams {
     )
 }
 
+/// Instantiates a new type of IdNamePair from nari.types requires an instance of Python::with_gil
+///
+/// Example: create_id_name_pair(py, "nari.types.actor", "Actor", vec![id, name])
 fn create_id_name_pair<'a>(py: Python<'a>, module: &'a str, class: &'a str, id_name_pair: Vec<&'a str>) -> &'a PyAny {
     PyModule::import(py, module).unwrap()
         .getattr(class).unwrap()
         .call1(parse_id_name_pair(id_name_pair)).unwrap()
 }
 
+/// Updates nari.types.actor.Actor position values
 fn update_position(actor: &PyAny, position: Vec<f32>) {
     actor.getattr("position").unwrap()
         .call_method1("update", (
@@ -152,6 +117,7 @@ fn update_position(actor: &PyAny, position: Vec<f32>) {
         ).unwrap();
 }
 
+/// Updates nari.types.actor.Actor resources values
 fn update_resources(actor: &PyAny, resources: Vec<u32>) {
     actor.getattr("resources").unwrap()
         .call_method1("update", (
@@ -162,4 +128,37 @@ fn update_resources(actor: &PyAny, resources: Vec<u32>) {
             (&resources[4]).to_owned(),
             (&resources[5]).to_owned())
         ).unwrap();
+}
+
+/// Get id name type from tuple
+fn parse_id_name_pair(inp: Vec<&str>) -> (u32, &str) {
+    (
+        number_parser::u32_from_param(inp.first().unwrap()),
+        inp.last().unwrap(),
+    )
+}
+
+/// Params to action_effect
+fn action_effect_from_params(inp: Vec<&str>) -> ActionEffectParams {
+    let mut num = number_parser::u32_from_param(inp[0]);
+    let param0 = (&num >> 24) as u8;
+    let param1 = (&num >> 16) as u8;
+    let severity = (&num >> 8) as u8;
+    let effect_category = num as u8;
+    num = number_parser::u32_from_param(inp[1]);
+    let value = (&num >> 16) as u16;
+    let flags = (&num >> 8) as u8;
+    let multiplier = num as u8;
+    (param0, param1, severity, effect_category, value, flags, multiplier)
+}
+
+/// Params to status_effect
+fn status_effect_from_params(inp: Vec<&str>) -> StatusEffectParams {
+    let (param0, param1) = number_parser::u16x2_from_param(inp.get(0).unwrap());
+    (
+        param0,
+        param1,
+        number_parser::f32_from_param(inp.get(1).unwrap()),
+        number_parser::u32_from_param(inp.get(2).unwrap()),
+    )
 }
