@@ -1,6 +1,5 @@
-use md5::{Digest, Md5};
 use pyo3::prelude::*;
-use sha2::Sha256;
+use sha2::{Digest, Sha256};
 use std::num::ParseIntError;
 
 
@@ -38,25 +37,14 @@ pub(crate) fn pad8(str: &str) -> String {
 
 /// Gets [to_hash, check] from a line based on algo
 #[pyfunction]
-#[pyo3(text_signature = "(line: str, index: int, algo: str) -> bool")]
-pub(crate) fn validate_checksum_internal(line: &str, index: i32, alg: u32) -> bool {
-    let (md5, sub) = match alg {
-        0 => (true, 32),
-        _ => (false, 16),
-    };
+#[pyo3(text_signature = "(line: str, index: int) -> bool")]
+pub(crate) fn validate_checksum_internal(line: &str, index: i32) -> bool {
     let last = line.len();
-    let hash = decode_hex(&line[&last - &sub..]).unwrap();
-    if md5 {
-        let mut hasher = Md5::new();
-        hasher.update(&line[..&last - &sub]);
-        hasher.update(&index.to_string());
-        hasher.finalize()[..] == hash
-    } else {
-        let mut hasher = Sha256::new();
-        hasher.update(&line[..&last - &sub]);
-        hasher.update(&index.to_string());
-        hasher.finalize()[..8] == hash
-    }
+    let hash = decode_hex(&line[&last - 16..]).unwrap();
+    let mut hasher = Sha256::new();
+    hasher.update(&line[..&last - 16]);
+    hasher.update(&index.to_string());
+    hasher.finalize()[..8] == hash
 }
 
 fn encode_hex(v: &Vec<u8>) -> String {
