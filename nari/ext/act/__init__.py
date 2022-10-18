@@ -8,10 +8,8 @@ from nari.util.exceptions import EventNotFound
 
 from nari.ext.act.parser import ID_MAPPINGS, ActEventType
 from nari.ext.act.exceptions import InvalidActChecksum
-from nari.ext.act.utils import ActLogChecksumType, date_from_act_timestamp, validate_checksum
+from nari.ext.act.utils import date_from_act_timestamp, validate_checksum
 
-# The last version of ACT to use MD5 checksums
-# We default to SHA256, but if the version is <= 2.2.1.6 we switch to MD5
 LAST_MD5_VERSION = SemanticVersion(2,2,1,6)
 
 
@@ -23,7 +21,6 @@ class ActLogReader(Reader):
         self.index = 1
         self.raise_on_checksum_failure = raise_on_checksum_failure
         self.raise_on_invalid_id = raise_on_invalid_id
-        self.algo = ActLogChecksumType.SHA256
 
     def __del__(self):
         """Handles closing the file when the object undergoes garbage collection"""
@@ -47,10 +44,10 @@ class ActLogReader(Reader):
             if id_ == ActEventType.version:
                 version_event = ID_MAPPINGS[id_](timestamp, args[2:-1])
                 if isinstance(version_event, Version) and version_event.version <= LAST_MD5_VERSION:
-                    self.algo = ActLogChecksumType.MD5
+                    raise InvalidActChecksum(f'Can not validate checksum for version {version_event.version}')
 
-            if validate_checksum(line.strip(), self.index, self.algo) is False:
-                raise InvalidActChecksum(f'Invalid checksum for line {line.strip()} with algo {self.algo} and index {self.index})')
+            if validate_checksum(line.strip(), self.index) is False:
+                raise InvalidActChecksum(f'Invalid checksum for line {line.strip()} with index {self.index})')
 
             self.index += 1
 
