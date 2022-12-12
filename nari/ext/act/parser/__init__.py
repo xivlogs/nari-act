@@ -29,6 +29,7 @@ from nari.ext.act.types import ActIdMapping
 # pylint: disable=invalid-name
 class ActEventType(IntEnum):
     """List of Event types from the ACT network log"""
+
     memorychatlog = 0
     memoryzonechange = 1
     memorychangeprimaryplayer = 2
@@ -65,6 +66,7 @@ class ActEventType(IntEnum):
     packetdump = 252
     version = 253
     error = 254
+    overlayplugin = 256
 
     @classmethod
     def has_id(cls, id_: int) -> bool:
@@ -74,13 +76,16 @@ class ActEventType(IntEnum):
     @classmethod
     def has_type(cls, name: str) -> bool:
         """Returns True if the name is in the enum"""
-        return name in cls.__members__.keys() # pylint: disable=consider-iterating-dictionary
+        return name in cls.__members__.keys()  # pylint: disable=consider-iterating-dictionary
+
+
 # pylint: enable=invalid-name
 
 # pylint: disable=unused-argument
 def noop(timestamp: Timestamp, params: list[str]) -> Event:
     """Straight-up ignores things"""
     # print(f'Ignoring an event with timestamp {timestamp} and params: {"|".join(params)}')
+
 
 ID_MAPPINGS: ActIdMapping = {
     # Internal events
@@ -123,4 +128,5 @@ ID_MAPPINGS: ActIdMapping = {
     ActEventType.networktether: tether_from_logline,
     # Defined by ACT but unused events
     ActEventType.unusedworld: noop,
+    ActEventType.overlayplugin: noop,
 }
